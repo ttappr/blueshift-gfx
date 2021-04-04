@@ -66,7 +66,7 @@ impl Program {
                                           context.clone());
         frag_shader.compile(memory.as_str(), false);
         Ok( Program {
-                name                : name,
+                name,
                 vertex_shader       : vert_shader,
                 fragment_shader     : frag_shader,
                 pid                 : 0,
@@ -76,7 +76,7 @@ impl Program {
                 vertex_attrib_array : vec![],
                 draw_callback,
                 bind_attr_callback,
-                context             : context,
+                context,
             } )
     }
 }
