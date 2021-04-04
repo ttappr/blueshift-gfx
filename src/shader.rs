@@ -60,8 +60,7 @@ impl Shader {
             }
         }
         // Check to make sure the compilation was successful.
-        let param  = Ctx::COMPILE_STATUS;
-        let status = ctx.get_shader_parameter(sid, param);
+        let status = ctx.get_shader_parameter(sid, Ctx::COMPILE_STATUS);
         if status.is_falsy() {
             self.delete_id();
             false

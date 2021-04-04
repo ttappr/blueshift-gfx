@@ -385,28 +385,28 @@ impl Mat4 {
         // TODO - Should this be an in-place operation like multiply()?
         //        Should other operations be in-place that aren't?
 
-	    let mut mat = Mat4::new();
-	    let [m0, m1, m2, m3] = &mut mat.m;
+        let mut mat = Mat4::new();
+        let [m0, m1, m2, m3] = &mut mat.m;
 
-	    m0.x = 2.0 / (right - left );
-	    m1.x = 0.0;
-	    m2.x = 0.0;
-	    m3.x = -(right + left) / (right - left);
+        m0.x = 2.0 / (right - left );
+        m1.x = 0.0;
+        m2.x = 0.0;
+        m3.x = -(right + left) / (right - left);
 
-	    m0.y = 0.0;
-	    m1.y = 2.0 / (top - bottom);
-	    m2.y = 0.0;
-	    m3.y = -(top + bottom) / (top - bottom);
+        m0.y = 0.0;
+        m1.y = 2.0 / (top - bottom);
+        m2.y = 0.0;
+        m3.y = -(top + bottom) / (top - bottom);
 
-	    m0.z = 0.0;
-	    m1.z = 0.0;
-	    m2.z = -2.0 / (clip_end - clip_start);
-	    m3.z = -(clip_end + clip_start) / (clip_end - clip_start);
+        m0.z = 0.0;
+        m1.z = 0.0;
+        m2.z = -2.0 / (clip_end - clip_start);
+        m3.z = -(clip_end + clip_start) / (clip_end - clip_start);
 
-	    m0.w = 0.0;
-	    m1.w = 0.0;
-	    m2.w = 0.0;
-	    m3.w = 1.0;		
+        m0.w = 0.0;
+        m1.w = 0.0;
+        m2.w = 0.0;
+        m3.w = 1.0;        
 
         *self = self.multiply(&mat);
     }
