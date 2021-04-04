@@ -38,4 +38,5 @@ features = ['Blob',
             'HtmlCanvasElement', 'WebGlBuffer',
             'WebGlRenderingContext', 
             'WebGlProgram', 'WebGlShader', 
+            'WebGlActiveInfo', 'WebGlUniformLocation',
             'Window']

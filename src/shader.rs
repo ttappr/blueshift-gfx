@@ -25,6 +25,10 @@ impl Shader {
             context,
         }
     }
+    #[inline]
+    pub fn sid(&self) -> &WebGlShader {
+        &self.sid.as_ref().expect("Shader sid not set.")
+    }
     fn delete_id(&mut self) {
         if self.sid.is_some() {
             self.context.delete_shader(self.sid.as_ref());
