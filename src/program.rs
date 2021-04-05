@@ -46,7 +46,6 @@ impl Program {
                      vertex_shader_url    : String,
                      fragment_shader_url  : String,
                      relative_path        : bool,
-                     debug_shader         : bool,
                      bind_attr_callback   : Option<Box<BindAttribCallback>>,
                      draw_callback        : Option<Box<DrawCallback>>,
                      context              : Arc<WebGlRenderingContext>,
@@ -58,13 +57,13 @@ impl Program {
         let mut vert_shader = Shader::new(&vertex_shader_url, 
                                           Ctx::VERTEX_SHADER,
                                           context.clone());
-        vert_shader.compile(memory.as_str(), false);
+        vert_shader.compile(memory.as_str());
         
         let memory = Memory::mopen(&fragment_shader_url, relative_path).await?;
         let mut frag_shader = Shader::new(&fragment_shader_url,
                                           Ctx::FRAGMENT_SHADER,
                                           context.clone());
-        frag_shader.compile(memory.as_str(), false);
+        frag_shader.compile(memory.as_str());
         Ok( Program {
                 name,
                 vertex_shader       : vert_shader,
@@ -88,6 +87,8 @@ impl Program {
         }
     }
     fn add_vertex_attr(&mut self, name: String, var_type: u32) {
+        // TODO - Find out why we're even storing these. These can be retrieved
+        //        from the context anyway.
         let location = self.context.get_attrib_location(self.pid(), &name);
         self.vertex_attrib_array.push(
             VertexAttrib { 
@@ -97,6 +98,8 @@ impl Program {
             });
     }
     fn add_uniform(&mut self, name: String, var_type: u32) {
+        // TODO - Find out why we're even storing these. These can be retrieved
+        //        from the context anyway.
         // TODO - I may need to store loc as-is in the Program struct if the
         //        code below doesn't work for i32. What is 'constant' for?
         let loc = self.context.get_uniform_location(self.pid(), &name).unwrap();
@@ -109,7 +112,7 @@ impl Program {
             }
         )
     }
-    pub fn link(&mut self, debug: bool) -> bool {
+    pub fn link(&mut self) -> bool {
         use WebGlRenderingContext as Ctx;
         if self.pid.is_some() {
             return false;
@@ -132,8 +135,9 @@ impl Program {
         // Link the program.
         ctx.link_program(pid);
         
-        // If debug is true, print out any diagnostic info that just happened.
-        if debug {
+        #[cfg(debug_assertions)]
+        {
+            // If debug build, print out any diagnostic info that just happened.
             if let Some(log) = ctx.get_program_info_log(pid) {
                 if !log.is_empty() {
                     let msg = format!("[ {} ]\n", self.name);

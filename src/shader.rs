@@ -35,7 +35,7 @@ impl Shader {
             self.sid = None;
         }
     }
-    pub fn compile(&mut self, code: &str, debug: bool) -> bool {
+    pub fn compile(&mut self, code: &str) -> bool {
         use web_sys::WebGlRenderingContext as Ctx;
         if self.sid.is_some() {
             return false;
@@ -49,8 +49,9 @@ impl Shader {
         ctx.shader_source(sid, code);
         ctx.compile_shader(sid);
         
-        // If debug is true, print out any diagnostic info that just happened.
-        if debug {
+        #[cfg(debug_assertions)]
+        {
+            // If debug build, print out any diagnostic info that just happened.
             if let Some(log) = ctx.get_shader_info_log(sid) {
                 if !log.is_empty() {
                     let typ = if self.sh_type == Ctx::VERTEX_SHADER 
