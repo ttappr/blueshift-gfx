@@ -5,7 +5,9 @@
 
 ## About
 
-work in progress...
+This project is in a very unfinished state. Only a few parts of it are 
+implemented so far. So if you're looking for WebGL game engine, these are not
+the droids you're looking for.
 
 ## 🚴 Usage
 

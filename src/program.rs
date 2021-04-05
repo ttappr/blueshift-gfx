@@ -12,21 +12,21 @@ use crate::memory::Memory;
 use crate::shader::Shader;
 use crate::types::MAX_CHAR;
 
-pub struct Uniform {
+struct Uniform {
     name        : String,
     var_type    : u32,
     location    : i32,
     constant    : u8,
 }
 
-pub struct VertexAttrib {
+struct VertexAttrib {
     name        : String,
     var_type    : u32,
     location    : i32,
 }
 
-pub type DrawCallback        = dyn Fn();
-pub type BindAttribCallback  = dyn Fn();
+pub type DrawCallback     = dyn Fn(&Program);
+pub type BindAttrCallback = dyn Fn();
 
 pub struct Program {
     name                : String,
@@ -36,7 +36,7 @@ pub struct Program {
     uniform_array       : Vec<Uniform>,
     vertex_attrib_array : Vec<VertexAttrib>,
     draw_callback       : Option<Box<DrawCallback>>,
-    bind_attr_callback  : Option<Box<BindAttribCallback>>,
+    bind_attr_callback  : Option<Box<BindAttrCallback>>,
     context             : Arc<WebGlRenderingContext>,
 }
 
@@ -46,7 +46,7 @@ impl Program {
                      vertex_shader_url    : String,
                      fragment_shader_url  : String,
                      relative_path        : bool,
-                     bind_attr_callback   : Option<Box<BindAttribCallback>>,
+                     bind_attr_callback   : Option<Box<BindAttrCallback>>,
                      draw_callback        : Option<Box<DrawCallback>>,
                      context              : Arc<WebGlRenderingContext>,
                     ) -> Result<Self, GfxError>
@@ -76,9 +76,24 @@ impl Program {
                 context,
             } )
     }
+
     #[inline]
     pub fn pid(&self) -> &WebGlProgram {
         self.pid.as_ref().expect("Program pid not set")
+    }
+    pub fn set_draw_callback(&mut self, draw_callback: Box<DrawCallback>) {
+        self.draw_callback = Some(draw_callback);
+    }
+    pub fn set_bind_attr_callback(&mut self, 
+                                  bind_attr_callback: Box<BindAttrCallback>)
+    {
+        self.bind_attr_callback = Some(bind_attr_callback);
+    }
+    pub fn draw(&self) {
+        self.context.use_program(self.pid.as_ref());
+        if let Some(callback) = &self.draw_callback {
+            callback(self);
+        }
     }
     fn delete_id(&mut self) {
         if self.pid.is_some() {
@@ -112,12 +127,28 @@ impl Program {
             }
         )
     }
+    fn get_vertex_attrib_location(&self, name: &str) -> i32 {
+        let attr = self.vertex_attrib_array
+                       .iter()
+                       .find(|a| a.name == name)
+                       .expect(&format!("{}.{} wasn't found.", 
+                                        self.name, name));
+        attr.location
+    }
+    fn get_uniform_location(&self, name: &str) -> i32 {
+        let uni = self.uniform_array
+                      .iter()
+                      .find(|u| u.name == name)
+                      .expect(&format!("{}.{} wasn't found.", 
+                                       self.name, name));
+        uni.location
+    }
     pub fn link(&mut self) -> bool {
         use WebGlRenderingContext as Ctx;
         if self.pid.is_some() {
             return false;
         }
-        let ctx = self.context.clone();
+        let ctx = &*self.context;
         
         // Create the program.
         self.pid = ctx.create_program();
@@ -149,8 +180,18 @@ impl Program {
         let status = ctx.get_program_parameter(pid, Ctx::LINK_STATUS);
         if status.is_falsy() {
             self.delete_id();
-            return false;
+            false
+        } else {
+            self.set_var_vectors();
+            true
         }
+    }
+    fn set_var_vectors(&mut self) {
+        use WebGlRenderingContext as Ctx;
+        
+        let ref pid = self.pid.as_ref().unwrap().clone();
+        let     ctx = self.context.clone();
+
         
         // Get the number of attributes and add them to the attribute array.
         let nattr = ctx.get_program_parameter(pid, Ctx::ACTIVE_ATTRIBUTES);
@@ -168,8 +209,6 @@ impl Program {
             let uni = ctx.get_active_uniform(pid, i).unwrap();
             self.add_uniform(uni.name(), uni.type_());
         }
-
-        true
     }
 }
 
