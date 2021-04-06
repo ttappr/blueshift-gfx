@@ -19,11 +19,26 @@ pub enum GfxError {
         msg   : String, 
         inner : OptInnerError, 
     },
+    MemoryError(crate::memory::MemoryError),
 }
 
 impl GfxError {
     pub fn new_http_rsp_not_ok(msg: String) -> Self {
         GfxError::HttpResponseNotOK(msg)
+    }
+    pub fn new_resource_load_error(msg    : String, 
+                                   source : OptInnerError) -> Self
+    {
+        GfxError::ResourceLoadError {
+            msg,
+            inner: source,
+        }
+    }
+    pub fn new_jserror(jsval: JsValue) -> Self 
+    {
+        GfxError::JSError {
+            jsval
+        }
     }
 }
 
@@ -45,6 +60,9 @@ impl fmt::Display for GfxError {
             ResourceLoadError { msg, inner: _ } => { 
                 write!(f, "{}", msg) 
             },
+            MemoryError(e) => {
+                write!(f, "{}", e)
+            }
         }
     }
 }
@@ -57,19 +75,17 @@ impl Error for GfxError {
             ResourceLoadError { msg: _, inner: Some(src) } => {
                 Some(src.as_ref())
             },
+            MemoryError(e) => {
+                Some(e)
+            }
             _ => { None },
         }
     }
 }
 
-impl From<JsValue> for GfxError {
-    fn from(jsval: JsValue) -> Self {
-        // TODO - Add match to branch on the type of the JsValue error to 
-        //        produce the corresponding GfxError.
-        
-        //if err.is_instance_of::<>()
-        
-        GfxError::JSError { jsval }
+impl From<crate::memory::MemoryError> for GfxError {
+    fn from(e: crate::memory::MemoryError) -> Self {
+        GfxError::MemoryError(e)
     }
 }
 

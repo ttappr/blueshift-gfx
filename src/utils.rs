@@ -1,5 +1,8 @@
 
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+
+use js_sys::Object;
 
 pub fn set_panic_hook() {
     // When the `console_error_panic_hook` feature is enabled, we can call the
@@ -21,5 +24,9 @@ extern "C" {
 #[macro_export]
 macro_rules! console_log {
     ($($t:tt)*) => (crate::utils::log(&format_args!($($t)*).to_string()))
+}
+
+pub (crate) fn jsval_to_string(jsval: &JsValue) -> String {
+    jsval.clone().dyn_into::<Object>().unwrap().to_string().into()
 }
 
