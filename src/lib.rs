@@ -10,15 +10,15 @@ mod types;
 mod utils;
 mod vector;
 
-use crate::error::*;
-use crate::gfx::*;
-use crate::matrix::*;
-use crate::memory::*;
-use crate::program::*;
-use crate::shader::*;
-use crate::types::*;
-use crate::utils::*;
-use crate::vector::*;
+pub use crate::error::*;
+pub use crate::gfx::*;
+pub use crate::matrix::*;
+pub use crate::memory::*;
+pub use crate::program::*;
+pub use crate::shader::*;
+pub use crate::types::*;
+pub use crate::utils::*;
+pub use crate::vector::*;
 
 
 

@@ -53,13 +53,13 @@ impl Program {
     {
         use WebGlRenderingContext as Ctx;
         
-        let memory = Memory::mopen(&vertex_shader_url, relative_path).await?;
+        let memory = Memory::mopen(&vertex_shader_url).await?;
         let mut vert_shader = Shader::new(&vertex_shader_url, 
                                           Ctx::VERTEX_SHADER,
                                           context.clone());
         vert_shader.compile(memory.as_str());
         
-        let memory = Memory::mopen(&fragment_shader_url, relative_path).await?;
+        let memory = Memory::mopen(&fragment_shader_url).await?;
         let mut frag_shader = Shader::new(&fragment_shader_url,
                                           Ctx::FRAGMENT_SHADER,
                                           context.clone());

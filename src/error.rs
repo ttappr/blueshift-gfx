@@ -1,5 +1,8 @@
 
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+
+use js_sys::Object;
 
 use std::error::Error;
 use std::fmt;
@@ -8,6 +11,10 @@ type OptInnerError = Option<Box<dyn Error + 'static>>;
 
 #[derive(Debug)]
 pub enum GfxError {
+    HttpResponseNotOK ( String ),
+    JSError {
+        jsval : JsValue,
+    },
     ResourceLoadError { 
         msg   : String, 
         inner : OptInnerError, 
@@ -15,12 +22,8 @@ pub enum GfxError {
 }
 
 impl GfxError {
-    pub fn new_resource_load_error(msg   : &str, 
-                                   inner : OptInnerError
-                                  ) -> Self 
-    {
-        use GfxError::ResourceLoadError;
-        ResourceLoadError { msg: msg.to_string(), inner }
+    pub fn new_http_rsp_not_ok(msg: String) -> Self {
+        GfxError::HttpResponseNotOK(msg)
     }
 }
 
@@ -29,7 +32,19 @@ impl fmt::Display for GfxError {
         use GfxError::*;
         
         match self {
-            ResourceLoadError { msg, inner: _ } => { write!(f, "blah!") },
+            HttpResponseNotOK ( msg ) => {
+                write!(f, "{}", msg)
+            },
+            JSError { jsval } => {
+                let s: String = jsval.clone().dyn_into::<Object>()
+                                             .unwrap()
+                                             .to_string()
+                                             .into();
+                write!(f, "{}", s)
+            },
+            ResourceLoadError { msg, inner: _ } => { 
+                write!(f, "{}", msg) 
+            },
         }
     }
 }
@@ -48,11 +63,14 @@ impl Error for GfxError {
 }
 
 impl From<JsValue> for GfxError {
-    fn from(err: JsValue) -> Self {
-        GfxError::ResourceLoadError { 
-            msg   : err.as_string().unwrap(), 
-            inner : None,
-        }
+    fn from(jsval: JsValue) -> Self {
+        // TODO - Add match to branch on the type of the JsValue error to 
+        //        produce the corresponding GfxError.
+        
+        //if err.is_instance_of::<>()
+        
+        GfxError::JSError { jsval }
     }
 }
+
 

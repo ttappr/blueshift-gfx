@@ -19,9 +19,7 @@ pub struct Memory {
 }
 
 impl Memory {
-    pub async fn mopen(url           : &str, 
-                       relative_path : bool
-                      ) -> Result<Self, GfxError> 
+    pub async fn mopen(url: &str) -> Result<Self, GfxError> 
     {
         let window = web_sys::window().unwrap();
         let url    = url.to_string();
@@ -29,12 +27,15 @@ impl Memory {
         let rsp = JsFuture::from(window.fetch_with_str(&url)).await?;
         let rsp = rsp.dyn_into::<Response>().unwrap();
         
-        assert!(rsp.is_instance_of::<Response>());
+        if !rsp.ok() {
+            let msg = format!("Fetch response for {} reported status {}.", 
+                              url, rsp.status());
+            return Err( GfxError::new_http_rsp_not_ok(msg) );
+        }
         
         let buf = JsFuture::from(rsp.array_buffer()?).await?;
         
         //let buf = buf.dyn_into::<ArrayBuffer>().unwrap();        
-        //assert!(buf.is_instance_of::<ArrayBuffer>());
         
         // rsp.blob()? could be used instead of .array_buffer(), then
         // maybe use a ReadableStream::from(blob) to get the data.
@@ -43,7 +44,8 @@ impl Memory {
         
         Ok( Memory { url, size: u8vec.len(), position: 0, buffer: u8vec } )
     }
-    pub fn as_str(&self) -> &str {
+    pub fn as_str(&self) -> &str 
+    {
         std::str::from_utf8(&self.buffer)
                   .expect("Buffer doesn't hold a valid utf-8 string.")
     }
