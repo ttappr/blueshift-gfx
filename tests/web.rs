@@ -27,8 +27,11 @@ async fn memory_mopen_bad_host_url() {
     let r = Memory::mopen("http://localhost:1000/tests/hello.txt").await;
     
     if let Err(e) = &r {
-        console::log_2(&"JSError: ".into(), &e.to_string().into());
-        assert_eq!(e.to_string(), "TypeError: Failed to fetch");
+        console::log_2(&"Error: ".into(), &e.to_string().into());
+        assert_eq!(e.to_string(), "Fetch from \
+                                   (http://localhost:1000/tests/hello.txt) \
+                                   failed with error \
+                                   (TypeError: Failed to fetch).");
     } else {
         panic!("Test case should have generated an error.");
     }

@@ -36,21 +36,19 @@ impl Memory {
         let window = web_sys::window().unwrap();
         let url    = url.to_string();
         
-        let rsp = JsFuture::from(window.fetch_with_str(&url)).await?;
+        let rsp = JsFuture::from(window.fetch_with_str(&url))
+                  .await
+                  .map_err(|e| FetchError(url.clone(), e))?;
+                  
         let rsp = rsp.dyn_into::<Response>().unwrap();
         
         if !rsp.ok() {
-            let emsg = format!("Fetch response for {} reported status {}.", 
-                               url, rsp.status());
-            MemoryError::raise_error(&emsg)?;
+            MemoryError::raise_status_error(&url, 
+                                            rsp.status(), 
+                                            rsp.status_text())?;
         }
-        
-        let buf = JsFuture::from(rsp.array_buffer()?).await?;
-        
-        //let buf = buf.dyn_into::<ArrayBuffer>().unwrap();        
-        
-        // rsp.blob()? could be used instead of .array_buffer(), then
-        // maybe use a ReadableStream::from(blob) to get the data.
+        let buf = rsp.array_buffer()        .map_err(|e| DataError(e))?;
+        let buf = JsFuture::from(buf).await .map_err(|e| DataError(e))?;
         
         let u8vec: Vec<u8> = js_sys::Uint8Array::new(&buf).to_vec();
         
@@ -65,8 +63,9 @@ impl Memory {
 
 #[derive(Debug)]
 pub enum MemoryError {
-    JSError(JsValue),
-    NativeError(String),
+    FetchError(String, JsValue),
+    FetchStatusError(String, u16, String),
+    DataError(JsValue),
 }
 
 impl Error for MemoryError {
@@ -77,28 +76,30 @@ impl Error for MemoryError {
 impl fmt::Display for MemoryError {
     fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            JSError(jsval) => {
-                write!(f, "{}", jsval_to_string(&jsval))
-            },
-            NativeError(msg) => {
-                write!(f, "{}", msg)
+            FetchError(url, jsval) => {
+                write!(f, "Fetch from ({}) failed with error ({}).", 
+                       url, jsval_to_string(&jsval))
+            }
+            FetchStatusError(url, status, status_text) => {
+                write!(f, "Fetch response for ({}) reported status {} ({})", 
+                       url, status, status_text)
+            }
+            DataError(jsval) => {
+                write!(f, "Extracting ArrayBuffer from fetched data \
+                       failed with error ({}).", 
+                       jsval_to_string(&jsval))
             }
         }
     }
 }
 
-impl From<JsValue> for MemoryError {
-    fn from(jsval: JsValue) -> Self {
-        if jsval.is_instance_of::<TypeError>() {
-            console::log_1(&"FOUND TYPE ERROR".into());
-        }
-        JSError(jsval)
-    }
-}
-
 impl MemoryError {
-    fn raise_error(msg: &str) -> Result<(), MemoryError> {
-        Err(NativeError(msg.to_string()))
+    fn raise_status_error(url         : &str, 
+                          status      : u16, 
+                          status_text : String
+                         ) -> Result<(), MemoryError> 
+    {
+        Err(FetchStatusError(url.to_string(), status, status_text))
     }
 }
 
