@@ -18,8 +18,6 @@ use web_sys::Response;
 use crate::error::*;
 use crate::utils::jsval_to_string;
 
-use MemoryError::*;
-
 pub struct Memory {
     url         : String,
     size        : usize,
@@ -43,9 +41,7 @@ impl Memory {
         let rsp = rsp.dyn_into::<Response>().unwrap();
         
         if !rsp.ok() {
-            MemoryError::raise_status_error(&url, 
-                                            rsp.status(), 
-                                            rsp.status_text())?;
+            raise_status_error(&url, rsp.status(), rsp.status_text())?;
         }
         let buf = rsp.array_buffer()        .map_err(|e| DataError(e))?;
         let buf = JsFuture::from(buf).await .map_err(|e| DataError(e))?;
@@ -75,6 +71,7 @@ impl Error for MemoryError {
 }
 impl fmt::Display for MemoryError {
     fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
+        use MemoryError::*;
         match self {
             FetchError(url, jsval) => {
                 write!(f, "Fetch from ({}) failed with error ({}).", 
@@ -93,14 +90,43 @@ impl fmt::Display for MemoryError {
     }
 }
 
-impl MemoryError {
-    fn raise_status_error(url         : &str, 
-                          status      : u16, 
-                          status_text : String
-                         ) -> Result<(), MemoryError> 
-    {
-        Err(FetchStatusError(url.to_string(), status, status_text))
-    }
+fn raise_status_error(url         : &str, 
+                      status      : u16, 
+                      status_text : String
+                     ) -> Result<(), MemoryError> 
+{
+    Err(MemoryError::FetchStatusError(url.to_string(), status, status_text))
 }
 
+#[cfg(feature = "test_accessors")]
+impl MemoryError {
+    // TODO - These methods are just to support tests. Figure out how to exclude
+    //        them for non-test builds. Something like #[cfg(wasm_tests)]
+    pub fn status(&self) -> u16 {
+        use MemoryError::*;
+        match self {
+            FetchStatusError(_, stat, _) => *stat,
+            _ => panic!("{:?} doesn't have status property.", self),
+        }
+    }
+    pub fn jsvalue(&self) -> &JsValue {
+        use MemoryError::*;
+        match self {
+            FetchError(_, v) => &v,
+            DataError(v) => &v,
+            _ => panic!("{:?} doesn't have an associated JsValue.", self),
+        }
+    }
+    pub fn jsvalue_as_string(&self) -> String {
+        jsval_to_string(self.jsvalue())
+    }
+    pub fn url(&self) -> &str {
+        use MemoryError::*;
+        match self {
+            FetchError(url, _) => &url,
+            FetchStatusError(url, _, _) => &url,
+            _ => panic!("{:?} doesn't have an associated URL.", self),
+        }
+    }
+}
 

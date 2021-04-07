@@ -1,10 +1,12 @@
 
 use std::sync::Arc;
 
+use wasm_bindgen_futures::JsFuture;
+
 use web_sys::console;
 use web_sys::WebGlRenderingContext;
-use wasm_bindgen_futures::JsFuture;
 use web_sys::WebGlProgram;
+use web_sys::WebGlUniformLocation;
 
 
 use crate::error::GfxError;
@@ -12,14 +14,15 @@ use crate::memory::Memory;
 use crate::shader::Shader;
 use crate::types::MAX_CHAR;
 
-struct Uniform {
+pub struct Uniform {
     name        : String,
     var_type    : u32,
-    location    : i32,
+    //location    : i32,
+    location    : WebGlUniformLocation,
     constant    : u8,
 }
 
-struct VertexAttrib {
+pub struct VertexAttrib {
     name        : String,
     var_type    : u32,
     location    : i32,
@@ -45,7 +48,6 @@ impl Program {
     pub async fn new(name                 : String,
                      vertex_shader_url    : String,
                      fragment_shader_url  : String,
-                     relative_path        : bool,
                      bind_attr_callback   : Option<Box<BindAttrCallback>>,
                      draw_callback        : Option<Box<DrawCallback>>,
                      context              : Arc<WebGlRenderingContext>,
@@ -117,12 +119,13 @@ impl Program {
         //        from the context anyway.
         // TODO - I may need to store loc as-is in the Program struct if the
         //        code below doesn't work for i32. What is 'constant' for?
-        let loc = self.context.get_uniform_location(self.pid(), &name).unwrap();
+        let location = self.context.get_uniform_location(self.pid(), &name)
+                                   .unwrap();
         self.uniform_array.push(
             Uniform {
                 name,
                 var_type,
-                location: loc.as_f64().unwrap() as i32,
+                location,
                 constant: 0
             }
         )
@@ -135,13 +138,13 @@ impl Program {
                                         self.name, name));
         attr.location
     }
-    fn get_uniform_location(&self, name: &str) -> i32 {
+    fn get_uniform_location(&self, name: &str) -> &WebGlUniformLocation {
         let uni = self.uniform_array
                       .iter()
                       .find(|u| u.name == name)
                       .expect(&format!("{}.{} wasn't found.", 
                                        self.name, name));
-        uni.location
+        &uni.location
     }
     pub fn link(&mut self) -> bool {
         use WebGlRenderingContext as Ctx;
@@ -217,10 +220,4 @@ impl Drop for Program {
         self.delete_id();
     }
 }
-
-
-
-
-
-
 

@@ -7,6 +7,8 @@ use js_sys::Object;
 use std::error::Error;
 use std::fmt;
 
+use crate::utils::jsval_to_string;
+
 type OptInnerError = Option<Box<dyn Error + 'static>>;
 
 #[derive(Debug)]
@@ -51,11 +53,7 @@ impl fmt::Display for GfxError {
                 write!(f, "{}", msg)
             },
             JSError { jsval } => {
-                let s: String = jsval.clone().dyn_into::<Object>()
-                                             .unwrap()
-                                             .to_string()
-                                             .into();
-                write!(f, "{}", s)
+                write!(f, "{}", jsval_to_string(&jsval))
             },
             ResourceLoadError { msg, inner: _ } => { 
                 write!(f, "{}", msg) 

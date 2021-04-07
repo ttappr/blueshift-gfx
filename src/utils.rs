@@ -26,7 +26,7 @@ macro_rules! console_log {
     ($($t:tt)*) => (crate::utils::log(&format_args!($($t)*).to_string()))
 }
 
-pub (crate) fn jsval_to_string(jsval: &JsValue) -> String {
+pub fn jsval_to_string(jsval: &JsValue) -> String {
     jsval.clone().dyn_into::<Object>().unwrap().to_string().into()
 }
 
