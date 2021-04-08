@@ -6,15 +6,11 @@
 use std::sync::Arc;
 
 use wasm_bindgen::JsCast;
-
+use wasm_bindgen_test::*;
 use web_sys::console;
 use web_sys::WebGlRenderingContext;
 
 use blueshift_gfx::Program;
-
-use wasm_bindgen_test::*;
-
-//mod web;
 
 wasm_bindgen_test_configure!(run_in_browser);
 

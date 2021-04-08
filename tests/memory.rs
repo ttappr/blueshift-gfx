@@ -3,14 +3,10 @@
 #![cfg(target_arch = "wasm32")]
 #![cfg(feature = "test_accessors")]
 
+use wasm_bindgen_test::*;
 use web_sys::console;
 
 use blueshift_gfx::Memory;
-
-use wasm_bindgen_test::*;
-
-//#[wasm_bindgen_test]
-//mod program;
 
 wasm_bindgen_test_configure!(run_in_browser);
 

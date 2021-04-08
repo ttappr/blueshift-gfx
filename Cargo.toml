@@ -35,9 +35,8 @@ version = "0.3.50"
 features = ['Blob',
             'console', 'Document', 'Element', 
             'Headers', 'Request', 'RequestInit',
-            'RequestMode', 'Response',
-            'HtmlCanvasElement', 'WebGlBuffer',
-            'WebGlRenderingContext', 
-            'WebGlProgram', 'WebGlShader', 
+            'RequestMode', 'Response','HtmlCanvasElement', 'WebGlBuffer',
+            'WebGlRenderingContext', 'WebglCompressedTexturePvrtc',
+            'WebGlTexture', 'WebGlProgram', 'WebGlShader', 
             'WebGlActiveInfo', 'WebGlUniformLocation',
             'Window']
